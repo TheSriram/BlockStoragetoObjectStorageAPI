@@ -38,25 +38,41 @@ def filecreator():
     filenames= filenamegenerator()
     filesizes= filesizegenerator()
     actual_file_sizes = [filesize/(1024*1024) for filesize in filesizes]
-    for filename,filesize in zip(filenames,filesizes):
-        create_file(os.path.join(os.getcwd(),filename),filesize)
+    # for filename,filesize in zip(filenames,filesizes):
+        # create_file(os.path.join(os.getcwd(),filename),filesize)
+
+def get_throuhgput(actual_file_sizes,throughput_series):
+    plt.clf()
+    plt.plot(actual_file_sizes, throughput_series,label="File Sizes (in MB)  vs Throughput while uploading to S3 (in MB/s)")
+    plt.xlabel("File Sizes in MB")
+    plt.ylabel("Throughput in MB/s")
+    plt.title("Upload Throughput difference with file size")
+    plt.xlim(5, 250)
+    plt.ylim(0, 50)
+    plt.legend(loc="upper right")
+    plt.savefig("S3_throughput.png")
 
 def main():
     connection = S3Connection()
     time_taken_series = []
+    throughput_series = []
     filecreator()
     filesizes= filesizegenerator()
     actual_file_sizes = [filesize/(1024*1024) for filesize in filesizes]
     filenames = filenamegenerator()
     for filename in filenames:
         time_taken_series.append(S3checker(connection,filename))
+    for filesize,time in zip(actual_file_sizes,time_taken_series):
+        throughput_series.append(float(filesize/time))
+        print "Throughput was {0}".format(float(filesize/time))
     plt.plot(actual_file_sizes, time_taken_series,label="File Sizes (in MB)  vs Time taken to upload to S3 (in seconds)")
     plt.xlabel("File Sizes in MB")
     plt.ylabel("Time taken in seconds")
-    plt.title("Upload rate difference with file size")
+    plt.title("Upload Time difference with file size")
     plt.xlim(5, 250)
     plt.ylim(0, 50)
     plt.legend(loc="upper right")
     plt.savefig("S3_performance.png")
+    get_throuhgput(actual_file_sizes,throughput_series)
 if __name__ == '__main__':
     main()
